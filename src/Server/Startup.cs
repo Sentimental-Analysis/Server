@@ -1,9 +1,20 @@
+using System.Collections.Immutable;
+using Core.Cache.Implementations;
+using Core.Cache.Interfaces;
 using Core.Database.Implementations;
+using Core.Database.Interfaces;
+using Core.Models;
+using Core.Services.Implementations;
+using Core.Services.Interfaces;
+using Core.UnitOfWork.Implementations;
+using Core.UnitOfWork.Interfaces;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Server
 {
@@ -26,8 +37,21 @@ namespace Server
         {
             services.AddMemoryCache();
 
-//            services.AddEntityFrameworkNpgsql()
-//                .AddDbContext<PostgresDbContext>(options => options.UseNpgsql(Configuration["Data:DbContext:LocalConnectionString"]));
+            services.AddEntityFrameworkNpgsql()
+                .AddDbContext<PostgresDbContext>(
+                    options => options.UseNpgsql(Configuration["Data:DbContext:LocalConnectionString"]));
+            services.AddDbContext<PostgresDbContext>();
+            services.AddScoped<IDbContext, PostgresDbContext>();
+            services.AddScoped<ISentimentalAnalysisService>(
+                provider => new SimpleAnalysisService(ImmutableDictionary<string, int>.Empty));
+            services.AddScoped<IUnitOfWork>(provider =>
+            {
+                var dbContext = provider.GetRequiredService<IDbContext>();
+                var cache = provider.GetRequiredService<IMemoryCache>();
+                var sentimentalAnalysisService = provider.GetRequiredService<ISentimentalAnalysisService>();
+                return new DefaultUnitOfWork(dbContext, cache, new TwitterApiCredentials(), sentimentalAnalysisService);
+            });
+            services.AddScoped<ITweetService, TweetService>();
 
             // Add framework services.
             services.AddMvc();
@@ -40,7 +64,8 @@ namespace Server
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
-            app.UseMvc().UseSwagger().UseSwaggerUi();;
+            app.UseMvc().UseSwagger().UseSwaggerUi();
+            ;
         }
     }
 }
