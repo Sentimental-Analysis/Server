@@ -23,7 +23,7 @@
         "Microsoft.Extensions.Caching.Abstractions": "1.0.0",
         "Microsoft.Extensions.Caching.Memory": "1.0.0",
         "Microsoft.Extensions.Configuration.UserSecrets": "1.0.0",
-        "Core": "1.0.3"
+        "Core": "1.0.4"
     },
 
     "userSecretsId": "sentimental-analysis99ba6b54-0141-46f0-b6fe-b9e53c50f73b",

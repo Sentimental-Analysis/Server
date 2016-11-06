@@ -39,7 +39,7 @@ namespace Server
             services.AddEntityFrameworkNpgsql()
                 .AddDbContext<PostgresDbContext>(
                     options => options.UseNpgsql(Configuration["Data:DbContext:LocalConnectionString"]));
-            services.AddDbContext<PostgresDbContext>();
+
             services.AddTransient<IDbContext, PostgresDbContext>();
             services.AddTransient<ISentimentalAnalysisService>(
                 provider => new SimpleAnalysisService(ImmutableDictionary<string, int>.Empty));
