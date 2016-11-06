@@ -1,6 +1,4 @@
 using System.Collections.Immutable;
-using Core.Cache.Implementations;
-using Core.Cache.Interfaces;
 using Core.Database.Implementations;
 using Core.Database.Interfaces;
 using Core.Models;
@@ -26,6 +24,7 @@ namespace Server
                 .SetBasePath(env.ContentRootPath)
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
+                .AddUserSecrets()
                 .AddEnvironmentVariables();
             Configuration = builder.Build();
         }
@@ -49,7 +48,13 @@ namespace Server
                 var dbContext = provider.GetRequiredService<IDbContext>();
                 var cache = provider.GetRequiredService<IMemoryCache>();
                 var sentimentalAnalysisService = provider.GetRequiredService<ISentimentalAnalysisService>();
-                return new DefaultUnitOfWork(dbContext, cache, new TwitterApiCredentials(), sentimentalAnalysisService);
+                return new DefaultUnitOfWork(dbContext, cache, new TwitterApiCredentials()
+                {
+                    AccessToken = Configuration["ACCESS_TOKEN"],
+                    AccessTokenSecret = Configuration["ACCSESS_TOKEN_SECRET"],
+                    ConsumerKey = Configuration["CONSUMER_KEY"],
+                    ConsumerSecret = Configuration["CONSUMER_SECRET"]
+                }, sentimentalAnalysisService);
             });
             services.AddTransient<ITweetService, TweetService>();
 
