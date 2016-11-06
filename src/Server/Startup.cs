@@ -41,17 +41,17 @@ namespace Server
                 .AddDbContext<PostgresDbContext>(
                     options => options.UseNpgsql(Configuration["Data:DbContext:LocalConnectionString"]));
             services.AddDbContext<PostgresDbContext>();
-            services.AddScoped<IDbContext, PostgresDbContext>();
-            services.AddScoped<ISentimentalAnalysisService>(
+            services.AddTransient<IDbContext, PostgresDbContext>();
+            services.AddTransient<ISentimentalAnalysisService>(
                 provider => new SimpleAnalysisService(ImmutableDictionary<string, int>.Empty));
-            services.AddScoped<IUnitOfWork>(provider =>
+            services.AddTransient<IUnitOfWork>(provider =>
             {
                 var dbContext = provider.GetRequiredService<IDbContext>();
                 var cache = provider.GetRequiredService<IMemoryCache>();
                 var sentimentalAnalysisService = provider.GetRequiredService<ISentimentalAnalysisService>();
                 return new DefaultUnitOfWork(dbContext, cache, new TwitterApiCredentials(), sentimentalAnalysisService);
             });
-            services.AddScoped<ITweetService, TweetService>();
+            services.AddTransient<ITweetService, TweetService>();
 
             // Add framework services.
             services.AddMvc();
@@ -65,7 +65,11 @@ namespace Server
             loggerFactory.AddDebug();
 
             app.UseMvc().UseSwagger().UseSwaggerUi();
-            ;
+
+            using (var serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
+            {
+                serviceScope.ServiceProvider.GetService<PostgresDbContext>().Database.Migrate();
+            }
         }
     }
 }

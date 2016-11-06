@@ -19,7 +19,11 @@ namespace Server.Controllers
         [HttpGet("{key}")]
         public Result<IEnumerable<Tweet>> Get(string key)
         {
-            return _tweetService.GetTweetByKey(key);
+            using (_tweetService)
+            {
+                return _tweetService.GetTweetByKey(key);
+            }
+
         }
     }
 }
