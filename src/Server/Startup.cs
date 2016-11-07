@@ -23,9 +23,15 @@ namespace Server
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
-                .AddUserSecrets()
-                .AddEnvironmentVariables();
+                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true);              
+
+            if (env.IsDevelopment())
+            {
+                builder.AddUserSecrets();
+            }
+
+            builder.AddEnvironmentVariables();
+
             Configuration = builder.Build();
         }
 
@@ -50,10 +56,10 @@ namespace Server
                 var sentimentalAnalysisService = provider.GetRequiredService<ISentimentalAnalysisService>();
                 return new DefaultUnitOfWork(dbContext, cache, new TwitterApiCredentials()
                 {
-                    AccessToken = Configuration["ACCESS_TOKEN"],
-                    AccessTokenSecret = Configuration["ACCSESS_TOKEN_SECRET"],
-                    ConsumerKey = Configuration["CONSUMER_KEY"],
-                    ConsumerSecret = Configuration["CONSUMER_SECRET"]
+                    AccessToken = Configuration["TwitterCredentials:ACCESS_TOKEN"],
+                    AccessTokenSecret = Configuration["TwitterCredentials:ACCSESS_TOKEN_SECRET"],
+                    ConsumerKey = Configuration["TwitterCredentials:CONSUMER_KEY"],
+                    ConsumerSecret = Configuration["TwitterCredentials:CONSUMER_SECRET"]
                 }, sentimentalAnalysisService);
             });
             services.AddTransient<ITweetService, TweetService>();
