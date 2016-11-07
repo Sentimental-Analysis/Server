@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.IO;
 using Core.Cache.Implementations;
 using Core.Cache.Interfaces;
 using Core.Database.Interfaces;
@@ -13,13 +14,16 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
+using NuGet.Common;
 using Server.Database.Implementations;
+using Server.Utils;
 
 namespace Server
 {
     public class Startup
     {
+        private string _afinnPath;
+
         public Startup(IHostingEnvironment env)
         {
             var builder = new ConfigurationBuilder()
@@ -35,6 +39,7 @@ namespace Server
             builder.AddEnvironmentVariables();
 
             Configuration = builder.Build();
+            _afinnPath = $"{env.WebRootPath}{Path.DirectorySeparatorChar}data{Path.DirectorySeparatorChar}afinn.json";
         }
 
         public IConfigurationRoot Configuration { get; }
@@ -51,7 +56,7 @@ namespace Server
             services.AddScoped<IDbContext, TweetDbContext>();
             services.AddTransient<ICacheService, InMemoryCacheService>();
             services.AddScoped<ISentimentalAnalysisService>(
-                provider => new SimpleAnalysisService(ImmutableDictionary<string, int>.Empty));
+                provider => new SimpleAnalysisService(FileUtils.GetAfinnJsonFile(_afinnPath).ToImmutableDictionary()));
 
             services.AddScoped<IUnitOfWork>(provider =>
             {
