@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Server.Migrations
 {
-    public partial class TweetMigration1 : Migration
+    public partial class TwitterMigration2 : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -12,14 +12,16 @@ namespace Server.Migrations
                 name: "Tweets",
                 columns: table => new
                 {
-                    Id = table.Column<string>(nullable: false),
+                    Id = table.Column<long>(nullable: false)
+                        .Annotation("Npgsql:ValueGeneratedOnAdd", true),
                     Date = table.Column<DateTime>(nullable: false),
                     Key = table.Column<string>(nullable: true),
                     Language = table.Column<string>(nullable: true),
                     Latitude = table.Column<double>(nullable: false),
                     Longitude = table.Column<double>(nullable: false),
                     Sentiment = table.Column<int>(nullable: false),
-                    Text = table.Column<string>(nullable: true)
+                    Text = table.Column<string>(nullable: true),
+                    TweetIdentifier = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {

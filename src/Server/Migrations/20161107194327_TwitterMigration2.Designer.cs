@@ -8,8 +8,8 @@ using Server.Database.Implementations;
 namespace Server.Migrations
 {
     [DbContext(typeof(TweetDbContext))]
-    [Migration("20161107134626_TweetMigration1")]
-    partial class TweetMigration1
+    [Migration("20161107194327_TwitterMigration2")]
+    partial class TwitterMigration2
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -18,7 +18,8 @@ namespace Server.Migrations
 
             modelBuilder.Entity("Core.Models.Tweet", b =>
                 {
-                    b.Property<string>("Id");
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd();
 
                     b.Property<DateTime>("Date");
 
@@ -33,6 +34,8 @@ namespace Server.Migrations
                     b.Property<int>("Sentiment");
 
                     b.Property<string>("Text");
+
+                    b.Property<string>("TweetIdentifier");
 
                     b.HasKey("Id");
 

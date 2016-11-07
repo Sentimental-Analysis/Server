@@ -17,7 +17,8 @@ namespace Server.Migrations
 
             modelBuilder.Entity("Core.Models.Tweet", b =>
                 {
-                    b.Property<string>("Id");
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd();
 
                     b.Property<DateTime>("Date");
 
@@ -32,6 +33,8 @@ namespace Server.Migrations
                     b.Property<int>("Sentiment");
 
                     b.Property<string>("Text");
+
+                    b.Property<string>("TweetIdentifier");
 
                     b.HasKey("Id");
 
