@@ -22,7 +22,7 @@ namespace Server
 {
     public class Startup
     {
-        private string _afinnPath;
+        private readonly string _afinnPath;
 
         public Startup(IHostingEnvironment env)
         {
@@ -39,6 +39,7 @@ namespace Server
             builder.AddEnvironmentVariables();
 
             Configuration = builder.Build();
+
             _afinnPath = $"{env.WebRootPath}{Path.DirectorySeparatorChar}data{Path.DirectorySeparatorChar}afinn.json";
         }
 
