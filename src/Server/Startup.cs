@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
-using Core.Database.Implementations;
+using Core.Cache.Implementations;
+using Core.Cache.Interfaces;
 using Core.Database.Interfaces;
 using Core.Models;
 using Core.Services.Implementations;
@@ -47,23 +48,28 @@ namespace Server
                 .AddDbContext<TweetDbContext>(
                     options => options.UseNpgsql(Configuration["Data:DbContext:LocalConnectionString"]));
 
-            services.AddTransient<IDbContext, TweetDbContext>();
-            services.AddTransient<ISentimentalAnalysisService>(
+            services.AddScoped<IDbContext, TweetDbContext>();
+            services.AddTransient<ICacheService, InMemoryCacheService>();
+            services.AddScoped<ISentimentalAnalysisService>(
                 provider => new SimpleAnalysisService(ImmutableDictionary<string, int>.Empty));
-            services.AddTransient<IUnitOfWork>(provider =>
+
+            services.AddScoped<IUnitOfWork>(provider =>
             {
                 var dbContext = provider.GetRequiredService<IDbContext>();
-                var cache = provider.GetRequiredService<IMemoryCache>();
-                var sentimentalAnalysisService = provider.GetRequiredService<ISentimentalAnalysisService>();
-                return new DefaultUnitOfWork(dbContext, cache, new TwitterApiCredentials()
+                return new DefaultUnitOfWork(dbContext, new TwitterApiCredentials()
                 {
                     AccessToken = Configuration["TwitterCredentials:ACCESS_TOKEN"],
                     AccessTokenSecret = Configuration["TwitterCredentials:ACCSESS_TOKEN_SECRET"],
                     ConsumerKey = Configuration["TwitterCredentials:CONSUMER_KEY"],
                     ConsumerSecret = Configuration["TwitterCredentials:CONSUMER_SECRET"]
-                }, sentimentalAnalysisService);
+                });
             });
-            services.AddTransient<ITweetService, TweetService>();
+            services.AddScoped<ITweetService>(provider =>
+            {
+                var unitOfWork = provider.GetRequiredService<IUnitOfWork>();
+                var sentimentalAnalysisService = provider.GetRequiredService<ISentimentalAnalysisService>();
+                return new TweetService(unitOfWork, sentimentalAnalysisService);
+            });
 
             // Add framework services.
             services.AddMvc();
