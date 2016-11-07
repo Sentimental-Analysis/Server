@@ -25,8 +25,9 @@ namespace Server
                 .UseIISIntegration()
                 .UseStartup<Startup>()
                 .Build();
-
             host.Run();
+
+
         }
     }
 }
