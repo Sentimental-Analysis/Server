@@ -13,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Server.Database.Implementations;
 
 namespace Server
 {
@@ -43,10 +44,10 @@ namespace Server
             services.AddMemoryCache();
 
             services.AddEntityFrameworkNpgsql()
-                .AddDbContext<PostgresDbContext>(
+                .AddDbContext<TweetDbContext>(
                     options => options.UseNpgsql(Configuration["Data:DbContext:LocalConnectionString"]));
 
-            services.AddTransient<IDbContext, PostgresDbContext>();
+            services.AddTransient<IDbContext, TweetDbContext>();
             services.AddTransient<ISentimentalAnalysisService>(
                 provider => new SimpleAnalysisService(ImmutableDictionary<string, int>.Empty));
             services.AddTransient<IUnitOfWork>(provider =>
@@ -79,7 +80,7 @@ namespace Server
 
             using (var serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
             {
-                serviceScope.ServiceProvider.GetService<PostgresDbContext>().Database.Migrate();
+                serviceScope.ServiceProvider.GetService<TweetDbContext>().Database.Migrate();
             }
         }
     }
