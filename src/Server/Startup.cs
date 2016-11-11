@@ -29,7 +29,7 @@ namespace Server
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true);              
+                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true);
 
             if (env.IsDevelopment())
             {
@@ -80,6 +80,15 @@ namespace Server
             // Add framework services.
             services.AddMvc();
             services.AddSwaggerGen();
+            services.AddCors(options =>
+            {
+                options.AddPolicy("Any-Origin", builder =>
+                {
+                    builder
+                        .AllowAnyOrigin()
+                        .AllowAnyMethod();
+                });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -88,7 +97,7 @@ namespace Server
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
-            app.UseMvc().UseSwagger().UseSwaggerUi();
+            app.UseMvc().UseSwagger().UseSwaggerUi().UseCors("Any-Origin");
 
             using (var serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
             {
