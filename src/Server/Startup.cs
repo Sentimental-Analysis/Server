@@ -82,11 +82,12 @@ namespace Server
             services.AddSwaggerGen();
             services.AddCors(options =>
             {
-                options.AddPolicy("Any-Origin", builder =>
+                options.AddPolicy("AnyOrigin", builder =>
                 {
                     builder
                         .AllowAnyOrigin()
-                        .AllowAnyMethod();
+                        .AllowAnyMethod()
+                        .AllowAnyHeader();
                 });
             });
         }
@@ -97,7 +98,7 @@ namespace Server
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
-            app.UseMvc().UseSwagger().UseSwaggerUi().UseCors("Any-Origin");
+            app.UseCors("AnyOrigin").UseMvc().UseSwagger().UseSwaggerUi();
 
             using (var serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
             {
