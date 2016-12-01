@@ -1,5 +1,7 @@
 using System.Collections.Immutable;
 using System.IO;
+using Bayes.Classifiers.Implementations;
+using Bayes.Classifiers.Interfaces;
 using Bayes.Data;
 using Bayes.Learner.Implementations;
 using Bayes.Utils;
@@ -67,6 +69,7 @@ namespace Server
                 return Learning.FromDictionary(FileUtils.GetAfinnJsonFile(_afinnPath).ToImmutableDictionary());
             });
 
+            services.AddScoped<IClassifier<Score, string>, TweetClassifier>();
             services.AddScoped<ISentimentalAnalysisService, BayesAnalysisService>();
 
             services.AddScoped<ITweetService>(provider =>
