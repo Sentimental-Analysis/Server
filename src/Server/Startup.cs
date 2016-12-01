@@ -1,14 +1,21 @@
+using System.Collections.Immutable;
 using System.IO;
+using Bayes.Data;
+using Bayes.Learner.Implementations;
+using Bayes.Utils;
 using Core.Cache.Implementations;
 using Core.Cache.Interfaces;
+using Core.Models;
 using Core.Services.Implementations;
 using Core.Services.Interfaces;
+using Core.UnitOfWork.Implementations;
 using Core.UnitOfWork.Interfaces;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Server.Utils;
 
 namespace Server
 {
@@ -42,20 +49,26 @@ namespace Server
         {
             services.AddMemoryCache();
             services.AddTransient<ICacheService, InMemoryCacheService>();
-//            services.AddScoped<ISentimentalAnalysisService>(
-//                provider => new SimpleAnalysisService(FileUtils.GetAfinnJsonFile(_afinnPath).ToImmutableDictionary()));
 
             services.AddScoped<IUnitOfWork>(provider =>
             {
-                return null;
-//                return new DefaultUnitOfWork(dbContext, new TwitterApiCredentials()
-//                {
-//                    AccessToken = Configuration["TwitterCredentials:ACCESS_TOKEN"],
-//                    AccessTokenSecret = Configuration["TwitterCredentials:ACCSESS_TOKEN_SECRET"],
-//                    ConsumerKey = Configuration["TwitterCredentials:CONSUMER_KEY"],
-//                    ConsumerSecret = Configuration["TwitterCredentials:CONSUMER_SECRET"]
-//                });
+                return new DefaultUnitOfWork(null, new TwitterApiCredentials()
+                {
+                    AccessToken = Configuration["TwitterCredentials:ACCESS_TOKEN"],
+                    AccessTokenSecret = Configuration["TwitterCredentials:ACCSESS_TOKEN_SECRET"],
+                    ConsumerKey = Configuration["TwitterCredentials:CONSUMER_KEY"],
+                    ConsumerSecret = Configuration["TwitterCredentials:CONSUMER_SECRET"]
+                });
             });
+
+            services.AddSingleton<LearnerState>(provider =>
+            {
+                var learner = new TweetLearner();
+                return Learning.FromDictionary(FileUtils.GetAfinnJsonFile(_afinnPath).ToImmutableDictionary());
+            });
+
+            services.AddScoped<ISentimentalAnalysisService, BayesAnalysisService>();
+
             services.AddScoped<ITweetService>(provider =>
             {
                 var unitOfWork = provider.GetRequiredService<IUnitOfWork>();
