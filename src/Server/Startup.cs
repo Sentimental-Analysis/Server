@@ -13,9 +13,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.EntityFrameworkCore;
-using NuGet.Common;
-using Server.Database.Implementations;
 using Server.Utils;
 
 namespace Server
@@ -49,12 +46,6 @@ namespace Server
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMemoryCache();
-
-            services.AddEntityFrameworkNpgsql()
-                .AddDbContext<TweetDbContext>(
-                    options => options.UseNpgsql(Configuration["Data:DbContext:LocalConnectionString"]));
-
-            services.AddScoped<IDbContext, TweetDbContext>();
             services.AddTransient<ICacheService, InMemoryCacheService>();
             services.AddScoped<ISentimentalAnalysisService>(
                 provider => new SimpleAnalysisService(FileUtils.GetAfinnJsonFile(_afinnPath).ToImmutableDictionary()));
@@ -99,11 +90,6 @@ namespace Server
             loggerFactory.AddDebug();
 
             app.UseCors("AnyOrigin").UseMvc().UseSwagger().UseSwaggerUi();
-
-            using (var serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
-            {
-                serviceScope.ServiceProvider.GetService<TweetDbContext>().Database.Migrate();
-            }
         }
     }
 }
