@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using Bayes.Classifiers.Implementations;
@@ -6,7 +5,6 @@ using Bayes.Classifiers.Interfaces;
 using Bayes.Data;
 using Bayes.Learner.Implementations;
 using Bayes.Learner.Interfaces;
-using Bayes.Utils;
 using Core.Cache.Implementations;
 using Core.Cache.Interfaces;
 using Core.Models;
@@ -14,7 +12,6 @@ using Core.Services.Implementations;
 using Core.Services.Interfaces;
 using Core.UnitOfWork.Implementations;
 using Core.UnitOfWork.Interfaces;
-using LanguageExt.SomeHelp;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -55,15 +52,21 @@ namespace Server
             services.AddMemoryCache();
             services.AddTransient<ICacheService, InMemoryCacheService>();
 
-            services.AddScoped<IUnitOfWork>(provider => new DefaultUnitOfWork(null, new TwitterApiCredentials()
-            {
-                AccessToken = Configuration["TwitterCredentials:ACCESS_TOKEN"],
-                AccessTokenSecret = Configuration["TwitterCredentials:ACCSESS_TOKEN_SECRET"],
-                ConsumerKey = Configuration["TwitterCredentials:CONSUMER_KEY"],
-                ConsumerSecret = Configuration["TwitterCredentials:CONSUMER_SECRET"]
-            }));
+            services.AddScoped<IUnitOfWork>(provider =>
+                {
+                    var cluster = Cassandra.Cluster.Builder().AddContactPoint(Configuration["Data:Cassandra:Address"]).Build();
 
-            services.AddScoped<ITweetLearner, TweetLearner>();
+                    return new DefaultUnitOfWork(cluster, new TwitterApiCredentials()
+                    {
+                        AccessToken = Configuration["TwitterCredentials:ACCESS_TOKEN"],
+                        AccessTokenSecret = Configuration["TwitterCredentials:ACCSESS_TOKEN_SECRET"],
+                        ConsumerKey = Configuration["TwitterCredentials:CONSUMER_KEY"],
+                        ConsumerSecret = Configuration["TwitterCredentials:CONSUMER_SECRET"]
+                    });
+                }
+        );
+
+        services.AddScoped<ITweetLearner, TweetLearner>();
 
             services.AddSingleton<ILearningService>(provider =>
             {
