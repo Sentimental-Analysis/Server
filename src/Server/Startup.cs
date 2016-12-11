@@ -1,9 +1,11 @@
 using System.Collections.Immutable;
 using System.IO;
+using System.Linq;
 using Bayes.Classifiers.Implementations;
 using Bayes.Classifiers.Interfaces;
 using Bayes.Data;
 using Bayes.Learner.Implementations;
+using Bayes.Learner.Interfaces;
 using Bayes.Utils;
 using Core.Cache.Implementations;
 using Core.Cache.Interfaces;
@@ -12,6 +14,7 @@ using Core.Services.Implementations;
 using Core.Services.Interfaces;
 using Core.UnitOfWork.Implementations;
 using Core.UnitOfWork.Interfaces;
+using LanguageExt.SomeHelp;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -52,25 +55,37 @@ namespace Server
             services.AddMemoryCache();
             services.AddTransient<ICacheService, InMemoryCacheService>();
 
-            services.AddScoped<IUnitOfWork>(provider =>
+            services.AddScoped<IUnitOfWork>(provider => new DefaultUnitOfWork(null, new TwitterApiCredentials()
             {
-                return new DefaultUnitOfWork(null, new TwitterApiCredentials()
-                {
-                    AccessToken = Configuration["TwitterCredentials:ACCESS_TOKEN"],
-                    AccessTokenSecret = Configuration["TwitterCredentials:ACCSESS_TOKEN_SECRET"],
-                    ConsumerKey = Configuration["TwitterCredentials:CONSUMER_KEY"],
-                    ConsumerSecret = Configuration["TwitterCredentials:CONSUMER_SECRET"]
-                });
+                AccessToken = Configuration["TwitterCredentials:ACCESS_TOKEN"],
+                AccessTokenSecret = Configuration["TwitterCredentials:ACCSESS_TOKEN_SECRET"],
+                ConsumerKey = Configuration["TwitterCredentials:CONSUMER_KEY"],
+                ConsumerSecret = Configuration["TwitterCredentials:CONSUMER_SECRET"]
+            }));
+
+            services.AddScoped<ITweetLearner, TweetLearner>();
+
+            services.AddSingleton<ILearningService>(provider =>
+            {
+                var initState = FileUtils.GetAfinnJsonFile(_afinnPath).Select(x => new Sentence(x.Key, x.Value >= 0 ? WordCategory.Positive : WordCategory.Negative)).ToList();
+                var cacheService = provider.GetRequiredService<ICacheService>();
+                var learner = provider.GetRequiredService<ITweetLearner>();
+                return new BayesLearningService(cacheService, learner, initState);
             });
 
-            services.AddSingleton<LearnerState>(provider =>
+            services.AddScoped<ITweetClassifier>(provider =>
             {
-                var learner = new TweetLearner();
-                return Learning.FromDictionary(FileUtils.GetAfinnJsonFile(_afinnPath).ToImmutableDictionary());
+                var learningService = provider.GetRequiredService<ILearningService>();
+                return new TweetClassifier(learningService.Get());
             });
 
             services.AddScoped<IClassifier<Score, string>, TweetClassifier>();
-            services.AddScoped<ISentimentalAnalysisService, BayesAnalysisService>();
+            services.AddScoped<ISentimentalAnalysisService>(provider =>
+            {
+                var learningService = provider.GetRequiredService<ILearningService>();
+                var classifier = provider.GetRequiredService<ITweetClassifier>();
+                return new BayesAnalysisService(learningService, classifier);
+            });
 
             services.AddScoped<ITweetService>(provider =>
             {
