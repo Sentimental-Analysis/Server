@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Bayes.Classifiers.Implementations;
@@ -54,7 +56,8 @@ namespace Server
 
             services.AddScoped<IUnitOfWork>(provider =>
                 {
-                    var cluster = Cassandra.Cluster.Builder().AddContactPoint(Configuration["Data:Cassandra:Address"]).Build();
+                    var cluster =
+                        Cassandra.Cluster.Builder().AddContactPoint(Configuration["Data:Cassandra:Address"]).Build();
 
                     return new DefaultUnitOfWork(cluster, new TwitterApiCredentials()
                     {
@@ -64,13 +67,21 @@ namespace Server
                         ConsumerSecret = Configuration["TwitterCredentials:CONSUMER_SECRET"]
                     });
                 }
-        );
+            );
 
-        services.AddScoped<ITweetLearner, TweetLearner>();
+            services.AddScoped<ITweetLearner, TweetLearner>();
 
-            services.AddSingleton<ILearningService>(provider =>
+            services.AddScoped<ILearningService>(provider =>
             {
-                var initState = FileUtils.GetAfinnJsonFile(_afinnPath).Select(x => new Sentence(x.Key, x.Value >= 0 ? WordCategory.Positive : WordCategory.Negative)).ToList();
+                var initState =
+                    new Lazy<IEnumerable<Sentence>>(
+                        () =>
+                            FileUtils.GetAfinnJsonFile(_afinnPath)
+                                .Select(
+                                    x =>
+                                        new Sentence(x.Key, x.Value >= 0 ? WordCategory.Positive : WordCategory.Negative))
+                                .ToList());
+
                 var cacheService = provider.GetRequiredService<ICacheService>();
                 var learner = provider.GetRequiredService<ITweetLearner>();
                 return new BayesLearningService(cacheService, learner, initState);
