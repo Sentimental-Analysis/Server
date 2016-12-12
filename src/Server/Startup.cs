@@ -7,9 +7,11 @@ using Bayes.Classifiers.Interfaces;
 using Bayes.Data;
 using Bayes.Learner.Implementations;
 using Bayes.Learner.Interfaces;
+using Cassandra.Mapping;
 using Core.Cache.Implementations;
 using Core.Cache.Interfaces;
 using Core.Models;
+using Core.Models.Mappings;
 using Core.Services.Implementations;
 using Core.Services.Interfaces;
 using Core.UnitOfWork.Implementations;
@@ -51,6 +53,7 @@ namespace Server
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            MappingConfiguration.Global.Define<TweetMapping>();
             services.AddMemoryCache();
             services.AddTransient<ICacheService, InMemoryCacheService>();
 

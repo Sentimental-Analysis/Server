@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "Core": "1.1.4",
+    "Core": "1.1.5",
     "Microsoft.AspNetCore.Mvc": "1.1.0",
     "Microsoft.AspNetCore.Routing": "1.1.0",
     "Microsoft.AspNetCore.Server.IISIntegration": "1.1.0",
