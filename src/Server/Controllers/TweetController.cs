@@ -21,10 +21,10 @@ namespace Server.Controllers
 
 
         [HttpGet("{key}")]
-        public Result<IEnumerable<Tweet>> Get(string key)
+        public Result<AnalysisScore> Get(string key)
         {
             string cacheKey = $"{nameof(TweetController)}-{nameof(Get)}-{key}";
-            return _cache.GetOrStore(cacheKey, () => _tweetService.GetTweetByKey(key), TimeSpan.FromDays(1));
+            return _cache.GetOrStore(cacheKey, () => _tweetService.GetTweetScoreByKey(key), TimeSpan.FromDays(1));
         }
 
         protected override void Dispose(bool disposing)
