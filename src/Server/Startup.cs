@@ -57,9 +57,9 @@ namespace Server
             services.AddScoped<IUnitOfWork>(provider =>
                 {
                     var cluster =
-                        Cassandra.Cluster.Builder().AddContactPoint(Configuration["Data:Cassandra:Address"]).Build();
+                        Cassandra.Cluster.Builder().AddContactPoint("127.0.0.1").WithDefaultKeyspace("sentiment").Build();
 
-                    return new DefaultUnitOfWork(cluster, new TwitterApiCredentials()
+                    return new DefaultUnitOfWork(cluster, new TwitterApiCredentials
                     {
                         AccessToken = Configuration["TwitterCredentials:ACCESS_TOKEN"],
                         AccessTokenSecret = Configuration["TwitterCredentials:ACCSESS_TOKEN_SECRET"],
@@ -93,7 +93,6 @@ namespace Server
                 return new TweetClassifier(learningService.Get());
             });
 
-            services.AddScoped<IClassifier<Score, string>, TweetClassifier>();
             services.AddScoped<ISentimentalAnalysisService>(provider =>
             {
                 var learningService = provider.GetRequiredService<ILearningService>();
