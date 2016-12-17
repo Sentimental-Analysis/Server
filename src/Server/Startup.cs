@@ -90,11 +90,7 @@ namespace Server
                 return new BayesLearningService(cacheService, learner, initState);
             });
 
-            services.AddScoped<ITweetClassifier>(provider =>
-            {
-                var learningService = provider.GetRequiredService<ILearningService>();
-                return new TweetClassifier(learningService.Get());
-            });
+            services.AddScoped<ITweetClassifier, TweetClassifier>();
 
             services.AddScoped<ISentimentalAnalysisService>(provider =>
             {
