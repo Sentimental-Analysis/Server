@@ -60,7 +60,7 @@ namespace Server
             services.AddScoped<IUnitOfWork>(provider =>
                 {
                     var cluster =
-                        Cassandra.Cluster.Builder().AddContactPoint("Data:Cassandra:Address").WithDefaultKeyspace("sentiment").Build();
+                        Cassandra.Cluster.Builder().AddContactPoint(Configuration["Data:Cassandra:Address"]).WithDefaultKeyspace("sentiment").Build();
 
                     return new DefaultUnitOfWork(cluster, new TwitterApiCredentials
                     {
