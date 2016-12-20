@@ -1,0 +1,28 @@
+version: '2'
+
+services:
+
+  web:
+    container_name: sentiment'
+    image: 'sentiment'
+    build:
+      context: .
+      dockerfile: sentiment.dockerfile
+    volumes:
+     - .:/var/www/sentiment
+    ports:
+     - "5000:5000"
+    depends_on:
+     - "cassandra"
+    networks:
+      - virtual-campus-network
+
+  cassandra:
+    container_name: 'cassandra'
+    image: cassandra
+    networks:
+      - virtual-campus-network
+
+networks:
+  virtual-campus-network:
+    driver: bridge

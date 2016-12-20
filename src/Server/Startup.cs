@@ -60,7 +60,7 @@ namespace Server
             services.AddScoped<IUnitOfWork>(provider =>
                 {
                     var cluster =
-                        Cassandra.Cluster.Builder().AddContactPoint("127.0.0.1").WithDefaultKeyspace("sentiment").Build();
+                        Cassandra.Cluster.Builder().AddContactPoint(Configuration["Data:Cassandra:Address"]).WithDefaultKeyspace("sentiment").Build();
 
                     return new DefaultUnitOfWork(cluster, new TwitterApiCredentials
                     {
@@ -90,11 +90,7 @@ namespace Server
                 return new BayesLearningService(cacheService, learner, initState);
             });
 
-            services.AddScoped<ITweetClassifier>(provider =>
-            {
-                var learningService = provider.GetRequiredService<ILearningService>();
-                return new TweetClassifier(learningService.Get());
-            });
+            services.AddScoped<ITweetClassifier, TweetClassifier>();
 
             services.AddScoped<ISentimentalAnalysisService>(provider =>
             {
