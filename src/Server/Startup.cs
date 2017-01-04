@@ -116,6 +116,13 @@ namespace Server
                 return new TweetBootService(unitOfWork, sentimentalAnalysisService);
             });
 
+            services.AddScoped<TweetBootService>(provider =>
+            {
+                var unitOfWork = provider.GetRequiredService<IUnitOfWork>();
+                var sentimentalAnalysisService = provider.GetRequiredService<ISentimentalAnalysisService>();
+                return new TweetBootService(unitOfWork, sentimentalAnalysisService);
+            });
+            
             // Add framework services.
             services.AddMvc();
             services.AddSwaggerGen();
