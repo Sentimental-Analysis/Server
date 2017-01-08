@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "Core": "1.2.3",
+    "Core": "1.2.5",
     "Hangfire": "1.6.8",
     "Hangfire.AspNetCore": "1.6.8",
     "Hangfire.Redis.StackExchange": "1.6.7.7",
