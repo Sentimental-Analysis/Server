@@ -16,11 +16,14 @@ using Core.Services.Implementations;
 using Core.Services.Interfaces;
 using Core.UnitOfWork.Implementations;
 using Core.UnitOfWork.Interfaces;
+using Hangfire;
+using Hangfire.AspNetCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Server.Hangfire;
 using Server.Utils;
 
 namespace Server
@@ -42,7 +45,7 @@ namespace Server
             }
 
             builder.AddEnvironmentVariables();
-
+            
             Configuration = builder.Build();
 
             _afinnPath = $"{env.WebRootPath}{Path.DirectorySeparatorChar}data{Path.DirectorySeparatorChar}afinn.json";
@@ -106,9 +109,31 @@ namespace Server
                 return new TweetService(unitOfWork, sentimentalAnalysisService);
             });
 
+            services.AddScoped<ITweetBotService>(provider =>
+            {
+                var unitOfWork = provider.GetRequiredService<IUnitOfWork>();
+                var sentimentalAnalysisService = provider.GetRequiredService<ISentimentalAnalysisService>();
+                return new TweetBootService(unitOfWork, sentimentalAnalysisService);
+            });
+
+            services.AddScoped<TweetBootService>(provider =>
+            {
+                var unitOfWork = provider.GetRequiredService<IUnitOfWork>();
+                var sentimentalAnalysisService = provider.GetRequiredService<ISentimentalAnalysisService>();
+                return new TweetBootService(unitOfWork, sentimentalAnalysisService);
+            });
+            
             // Add framework services.
             services.AddMvc();
             services.AddSwaggerGen();
+            services.AddHangfire(configuration =>
+            {
+                var provider = services.BuildServiceProvider();
+                var scopeFactory = (IServiceScopeFactory)provider.GetService(typeof(IServiceScopeFactory));
+                configuration.UseRedisStorage(Configuration["Data:Redis:Address"]);
+                configuration.UseActivator(new AspNetCoreJobActivator(scopeFactory));
+            });
+
             services.AddCors(options =>
             {
                 options.AddPolicy("AnyOrigin", builder =>
@@ -126,8 +151,7 @@ namespace Server
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
-
-            app.UseCors("AnyOrigin").UseMvc().UseSwagger().UseSwaggerUi();
+            app.UseCors("AnyOrigin").UseSwagger().UseSwaggerUi().UseHangfireDashboard("/hangfire", new DashboardOptions() { Authorization = new []{new AllowAnyAuthorizationFilter()}}).UseHangfireServer().UseMvc();
         }
     }
 }

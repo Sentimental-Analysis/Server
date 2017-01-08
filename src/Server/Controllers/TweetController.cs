@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using Core.Cache.Interfaces;
 using Core.Models;
 using Core.Services.Interfaces;
+using Core.Utils;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Server.Controllers
@@ -24,6 +26,13 @@ namespace Server.Controllers
         {
             string cacheKey = $"{nameof(TweetController)}-{nameof(Get)}-{key}";
             return _cache.GetOrStore(cacheKey, () => _tweetService.GetTweetScoreByKey(key), TimeSpan.FromDays(1));
+        }
+
+        [HttpGet("quantityByKey")]
+        public Result<IDictionary<string, long>> QuantityByKey()
+        {
+            string cacheKey = $"{nameof(TweetController)}-{nameof(QuantityByKey)}";
+            return _cache.GetOrStore(cacheKey, () => _tweetService.GetQuantityByTweetKey(), TimeSpan.FromHours(1));
         }
 
         protected override void Dispose(bool disposing)
