@@ -16,10 +16,17 @@ namespace Server.Controllers
             _botService = botService;
         }
 
-        [HttpGet]
-        public int Get()
+        [HttpGet("daily")]
+        public int Daily()
         {
             RecurringJob.AddOrUpdate(() => _botService.StoreNew(), Cron.Daily);
+            return 1;
+        }
+
+        [HttpGet("once")]
+        public int Once()
+        {
+            BackgroundJob.Enqueue(() => _botService.StoreNew());
             return 1;
         }
 
